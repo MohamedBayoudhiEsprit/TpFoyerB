@@ -3,8 +3,7 @@ package tn.esprit.tpfoyer.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tn.esprit.tpfoyer.entity.Etudiant;
 import tn.esprit.tpfoyer.repository.EtudiantRepository;
@@ -15,8 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,12 +26,14 @@ class EtudiantServiceImplTest {
     @InjectMocks
     private EtudiantServiceImpl etudiantService;
 
+    @Captor
+    private ArgumentCaptor<Etudiant> etudiantCaptor;
+
     private Etudiant etudiant1;
     private Etudiant etudiant2;
 
     @BeforeEach
     void setUp() {
-        // Setup test data before each test
         etudiant1 = new Etudiant();
         etudiant1.setIdEtudiant(1L);
         etudiant1.setNomEtudiant("Doe");
@@ -51,14 +51,14 @@ class EtudiantServiceImplTest {
 
     @Test
     void testRetrieveAllEtudiants_ShouldReturnListOfEtudiants() {
-        // Given (Arrange)
+        // Given
         List<Etudiant> expectedEtudiants = Arrays.asList(etudiant1, etudiant2);
         when(etudiantRepository.findAll()).thenReturn(expectedEtudiants);
 
-        // When (Act)
+        // When
         List<Etudiant> actualEtudiants = etudiantService.retrieveAllEtudiants();
 
-        // Then (Assert)
+        // Then
         assertEquals(2, actualEtudiants.size());
         assertEquals(expectedEtudiants, actualEtudiants);
         verify(etudiantRepository, times(1)).findAll();
@@ -154,15 +154,39 @@ class EtudiantServiceImplTest {
     }
 
     @Test
-    void testRetrieveAllEtudiants_ShouldReturnEmptyList_WhenNoEtudiants() {
+    void testAddEtudiant_WithArgumentCaptor_ShouldCaptureCorrectArgument() {
         // Given
-        when(etudiantRepository.findAll()).thenReturn(Arrays.asList());
+        when(etudiantRepository.save(any(Etudiant.class))).thenReturn(etudiant1);
 
         // When
-        List<Etudiant> actualEtudiants = etudiantService.retrieveAllEtudiants();
+        etudiantService.addEtudiant(etudiant1);
 
         // Then
-        assertTrue(actualEtudiants.isEmpty());
-        verify(etudiantRepository, times(1)).findAll();
+        verify(etudiantRepository).save(etudiantCaptor.capture());
+        Etudiant capturedEtudiant = etudiantCaptor.getValue();
+        
+        assertEquals("Doe", capturedEtudiant.getNomEtudiant());
+        assertEquals("John", capturedEtudiant.getPrenomEtudiant());
+        assertEquals(12345678L, capturedEtudiant.getCinEtudiant());
+    }
+
+    @Test
+    void testAddEtudiant_WithArgumentMatchers_ShouldUseCustomMatchers() {
+        // Given
+        when(etudiantRepository.save(argThat(etudiant -> 
+            etudiant.getNomEtudiant().equals("Doe") && 
+            etudiant.getCinEtudiant() == 12345678L
+        ))).thenReturn(etudiant1);
+
+        // When
+        Etudiant result = etudiantService.addEtudiant(etudiant1);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Doe", result.getNomEtudiant());
+        
+        verify(etudiantRepository).save(argThat(etudiant -> 
+            etudiant.getNomEtudiant().equals("Doe")
+        ));
     }
 }
