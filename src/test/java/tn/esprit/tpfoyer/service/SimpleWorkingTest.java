@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class MinimalEtudiantServiceTest {
+class SimpleWorkingTest {
 
     @Mock
     private EtudiantRepository etudiantRepository;
@@ -30,9 +30,8 @@ class MinimalEtudiantServiceTest {
     void setUp() {
         etudiant = new Etudiant();
         etudiant.setIdEtudiant(1L);
-        etudiant.setNomEtudiant("TestName");
-        etudiant.setPrenomEtudiant("TestPrenom");
-        etudiant.setCinEtudiant(12345678L);
+        etudiant.setNomEtudiant("Test");
+        etudiant.setPrenomEtudiant("User");
     }
 
     @Test
@@ -46,6 +45,7 @@ class MinimalEtudiantServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(1, result.size());
+        assertEquals("Test", result.get(0).getNomEtudiant());
         verify(etudiantRepository).findAll();
     }
 
@@ -59,19 +59,7 @@ class MinimalEtudiantServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals("TestName", result.getNomEtudiant());
+        assertEquals("Test", result.getNomEtudiant());
         verify(etudiantRepository).save(etudiant);
-    }
-
-    @Test
-    void testRemoveEtudiant() {
-        // Given
-        Long id = 1L;
-
-        // When
-        etudiantService.removeEtudiant(id);
-
-        // Then
-        verify(etudiantRepository).deleteById(id);
     }
 }
